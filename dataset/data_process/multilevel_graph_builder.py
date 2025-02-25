@@ -212,7 +212,7 @@ class MultiLevelGraphBuilder:
                 logging.warning(f"Failed to build DFG for {py_file}")
 
 def process_repobench_repo(repo_path: str) -> MultiLevelGraph:
-    """处理单个RepoBench仓库，构建多层次图结构"""
+    
     builder = MultiLevelGraphBuilder(repo_path)
     
     # 构建所有层次的图
@@ -223,7 +223,7 @@ def process_repobench_repo(repo_path: str) -> MultiLevelGraph:
     return builder.graphs
 
 def main():
-    # 设置日志
+    
     logging.basicConfig(level=logging.INFO)
     
     # RepoBench数据集路径
