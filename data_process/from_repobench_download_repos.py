@@ -11,7 +11,7 @@ import csv
 import os
 
 
-language = "python"
+language = "java"
 task = "retrieval"
 settings = ["cross_file_first"]
 
@@ -28,7 +28,9 @@ def load_data(task:str, language:str, settings: Union[str, list]):
     Returns:
         data: the loaded data
     """
-    ROOT = "GRACE/dataset/hf_datasets/repobench_r/data"
+    # ROOT = "GRACE/dataset/hf_datasets/repobench_r/data"
+    ROOT = "../dataset/hf_datasets/repobench_r/data"
+
     if task.lower() == 'r':
         task = 'retrieval'
     elif task.lower() == 'c':
@@ -163,12 +165,15 @@ def get_all_samples_from_repo(repo_name, dataset):
 
 def download_repo(repo):
     file_name = repo.split("/")[-1]
-    if file_name not in os.listdir("baselines/RepoHyper_main/scripts/data/repobench/repos/"):
-        os.system(f'git clone --depth 1 --single-branch https://github.com/{repo} data/repobench/repos/{file_name}')
+    # repo_folder = "GRACE/dataset/hf_datasets/repobench_r/repos"
+    repo_folder = "../dataset/hf_datasets/repobench_r/javarepos/"
+    if file_name not in os.listdir(repo_folder):
+            os.system(f'git clone --depth 1 --single-branch https://github.com/{repo} {repo_folder}/{file_name}')
     else:
         print(f"Already downloaded {repo}")
 
 if __name__ =="__main__":
+    print(f"language: {language}, task: {task}, settings: {settings}")
 
     cross_file_first_easy = load_data(task, language, "cross_file_first")["train"]["easy"]
     cross_file_first_hard = load_data(task, language, "cross_file_first")["train"]["hard"]
