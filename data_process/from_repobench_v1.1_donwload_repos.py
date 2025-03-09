@@ -101,14 +101,10 @@ def download_repo(repo):
         
     if file_name not in os.listdir(repo_folder):
         try:
-            # 设置 git 的用户名、邮箱和密码
-            # os.environ['GIT_USERNAME'] = 'your_username'
-            # os.environ['GIT_EMAIL'] = 'your_email@example.com'
-            # os.environ['GIT_PASSWORD'] = 'your_password'
 
             # 构建 git URL 并克隆仓库
-            git_url = f"https://github.com/{repo}.git"
-            # git_url = f"https://{os.environ['GIT_USERNAME']}:{os.environ['GIT_PASSWORD']}@github.com/{repo}.git"
+            # git_url = f"https://github.com/{repo}.git"
+            git_url = f"https://{os.environ['GIT_USERNAME']}:{os.environ['GIT_PASSWORD']}@github.com/{repo}.git"
             git.Repo.clone_from(git_url, f"{repo_folder}/{file_name}", depth=1, single_branch=True)
             print(f"Successfully cloned {repo} with configured git settings")
         except Exception as e:

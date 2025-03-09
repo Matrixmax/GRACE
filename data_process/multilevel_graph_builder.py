@@ -452,51 +452,78 @@ def process_repobench_repo(repo_path: str) -> MultiLevelGraph:
     
     return builder.graphs
 
+
+def visualize_and_save_graphs(graphs, output_dir):
+    def save_and_visualize_graph(graph, name, file_ext=".gpickle", figsize=(20, 20)):
+        # 保存图结构
+        nx.write_graphml(graph, output_dir / f"{name}{file_ext}")
+        
+        # 尝试可视化
+        try:
+            plt.figure(figsize=figsize)
+            pos = nx.spring_layout(graph)
+            nx.draw(graph, pos, with_labels=True, node_size=30,
+                    node_color="blue", font_size=8, alpha=0.6)
+            plt.title(name)
+            plt.savefig(output_dir / f"{name}_viz.png", dpi=100)
+            plt.close()
+        except Exception as e:
+            logging.warning(f"Failed to visualize {name} graph: {str(e)}")
+    
+    # 保存并可视化各个子图
+    graph_mapping = {
+        "folder_structure": graphs.folder_structure,
+        "cross_file_deps": graphs.cross_file_deps,
+        "call_graph": graphs.call_graph,
+        "type_deps": graphs.type_deps,
+        "class_inheritance": graphs.class_inheritance,
+        "ast_graph": graphs.ast_graph,
+        "cfg": graphs.cfg,
+        "dfg": graphs.dfg
+    }
+    
+    for name, graph in graph_mapping.items():
+        save_and_visualize_graph(graph, name)
+    
+    # 保存并可视化组合图
+    # 使用save_and_visualize_graph函数，但指定不同的文件扩展名和图形大小
+    save_and_visualize_graph(graphs.combined_graph, "combined_graph", file_ext=".graphml", figsize=(100, 100))
+
+
+
 def main():
     language = "python"
     logging.basicConfig(level=logging.INFO)
     
     # RepoBench数据集路径
-    repobench_path = f"GRACE/dataset/hf_datasets/repobench_r/{language}_repos"
-    
+    repobench_path = f"GRACE/dataset/hf_datasets/repobench_{language}_v1.1/cross_file_first/repos"
+
+       
     # 处理每个仓库
     for repo_dir in Path(repobench_path).iterdir():
-        if repo_dir.is_dir():
-            logging.info(f"Processing repository: {repo_dir}")
-            try:
-                graphs = process_repobench_repo(str(repo_dir))
-                
-                # 保存图结构
-                output_dir = Path("GRACE/dataset/processed_graphs") / repo_dir.name
-                output_dir.mkdir(parents=True, exist_ok=True)
-                
-                # # 保存各个子图
-                # nx.write_gpickle(graphs.folder_structure, output_dir / "folder_structure.gpickle")
-                # nx.write_gpickle(graphs.cross_file_deps, output_dir / "cross_file_deps.gpickle")
-                # nx.write_gpickle(graphs.call_graph, output_dir / "call_graph.gpickle")
-                # nx.write_gpickle(graphs.type_deps, output_dir / "type_deps.gpickle")
-                # nx.write_gpickle(graphs.class_inheritance, output_dir / "class_inheritance.gpickle")
-                # nx.write_gpickle(graphs.ast_graph, output_dir / "ast_graph.gpickle")
-                # nx.write_gpickle(graphs.cfg, output_dir / "cfg.gpickle")
-                # nx.write_gpickle(graphs.dfg, output_dir / "dfg.gpickle")
-                
-                # 保存组合图
-                nx.write_gpickle(graphs.combined_graph, output_dir / "combined_graph.gpickle")
-                
-                # 保存可视化版本（仅适用于小型图）
-                try:
-                    plt.figure(figsize=(20, 20))
-                    pos = nx.spring_layout(graphs.combined_graph)
-                    nx.draw(graphs.combined_graph, pos, with_labels=False, node_size=10, 
-                            node_color="blue", font_size=8, alpha=0.6)
-                    plt.savefig(output_dir / "combined_graph_viz.png", dpi=300)
-                    plt.close()
-                except Exception as viz_error:
-                    logging.warning(f"Failed to visualize graph: {str(viz_error)}")
-                
-                logging.info(f"Successfully processed repo: {repo_dir}")
-            except Exception as e:
-                logging.error(f"Failed to process repo: {repo_dir}: {str(e)}")
+        if not repo_dir.is_dir():
+            continue
+        
+        # 只使用其中几个repo进行测试
+        if repo_dir.name not in ["3D-DAM"]:
+            continue
+        
+        logging.info(f"Processing repository: {repo_dir}")
+        try:
+            graphs = process_repobench_repo(str(repo_dir))
+            
+            # 保存图结构
+            output_dir = repo_dir / "processed"
+            output_dir.mkdir(parents=True, exist_ok=True)
+
+            # 调用可视化函数
+            visualize_and_save_graphs(graphs, output_dir)
+            
+            logging.info(f"Successfully processed repo: {repo_dir}")
+        except Exception as e:
+            logging.error(f"Failed to process repo: {repo_dir}: {str(e)}")
+
+
 
 if __name__ == "__main__":
     main()
