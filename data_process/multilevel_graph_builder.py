@@ -438,7 +438,70 @@ class MultiLevelGraphBuilder:
                 # 只连接一个示例，实际应该更精确
                 break
 
-def process_repobench_repo(repo_path: str) -> MultiLevelGraph:
+def filter_next_line_and_after(code: str, next_line: str) -> str:
+    """
+    从代码中过滤掉 next_line 及其后续内容。
+    
+    Args:
+        code (str): 原始代码字符串
+        next_line (str): 需要过滤的下一行代码（以及之后的所有内容）
+    
+    Returns:
+        str: 过滤后的代码
+    """
+    if not next_line or not code:
+        return code
+    
+    # 在代码中查找 next_line 的位置
+    next_line_pos = code.find(next_line)
+    if next_line_pos == -1:
+        return code  # 如果没找到，返回原始代码
+    
+    # 返回 next_line 之前的代码部分
+    return code[:next_line_pos].rstrip()
+
+def preprocess_repobench_data(data_sample):
+    """
+    处理 RepoBench 数据集的样本，过滤掉 next_line 及其后续内容。
+    
+    Args:
+        data_sample: RepoBench 数据集的一个样本
+    
+    Returns:
+        dict: 处理后的样本，其中 all_code 被过滤后的版本替代
+    """
+    # 创建数据样本的副本，避免修改原始数据
+    processed_sample = dict(data_sample)
+    
+    # 获取 next_line 和 all_code
+    next_line = data_sample.get('next_line', '')
+    all_code = data_sample.get('all_code', '')
+    
+    # 过滤 all_code，移除 next_line 及其后续内容
+    filtered_code = filter_next_line_and_after(all_code, next_line)
+    
+    # 用过滤后的代码替换原始的 all_code
+    processed_sample['all_code'] = filtered_code
+    
+    return processed_sample
+
+def process_repobench_repo(repo_path: str, data_sample=None) -> MultiLevelGraph:
+    """
+    处理 RepoBench 仓库，构建多层次图结构。
+    如果提供了数据样本，会先过滤掉 next_line 及其后续内容。
+    
+    Args:
+        repo_path (str): 仓库路径
+        data_sample (dict, optional): RepoBench 数据样本，包含 next_line 和对应的代码
+    
+    Returns:
+        MultiLevelGraph: 构建的图结构
+    """
+    # 如果提供了数据样本，先预处理它
+    if data_sample:
+        processed_sample = preprocess_repobench_data(data_sample)
+        # 这里可以根据需要对仓库中的文件进行修改，去掉 next_line 及后续内容
+        # 例如：写入临时文件并建立图结构，或者修改特定文件
     
     builder = MultiLevelGraphBuilder(repo_path)
     
@@ -490,14 +553,21 @@ def visualize_and_save_graphs(graphs, output_dir):
     save_and_visualize_graph(graphs.combined_graph, "combined_graph", file_ext=".graphml", figsize=(100, 100))
 
 
-
 def main():
     language = "python"
     logging.basicConfig(level=logging.INFO)
     
     # RepoBench数据集路径
     repobench_path = f"GRACE/dataset/hf_datasets/repobench_{language}_v1.1/cross_file_first/repos"
-
+    
+    # 加载 RepoBench 数据集
+    try:
+        from datasets import load_dataset
+        dataset = load_dataset(f"/data/wxl/graphrag4se/GRACE/dataset/hf_datasets/repobench_{language}_v1.1", split=['cross_file_first'])[0]
+        logging.info(f"Successfully loaded RepoBench dataset with {len(dataset)} samples")
+    except Exception as e:
+        logging.error(f"Failed to load RepoBench dataset: {str(e)}")
+        dataset = None
        
     # 处理每个仓库
     for repo_dir in Path(repobench_path).iterdir():
@@ -510,14 +580,36 @@ def main():
         
         logging.info(f"Processing repository: {repo_dir}")
         try:
-            graphs = process_repobench_repo(str(repo_dir))
+            # 找出该仓库相关的所有样本
+            repo_samples = None
+            if dataset:
+                repo_samples = [sample for sample in dataset if repo_dir.name in sample['repo_name']]
+                logging.info(f"Found {len(repo_samples)} samples for repo {repo_dir.name}")
             
-            # 保存图结构
-            output_dir = repo_dir / "processed"
-            output_dir.mkdir(parents=True, exist_ok=True)
+            # 为每个样本构建过滤后的图结构
+            if repo_samples:
+                for i, sample in enumerate(repo_samples):
+                    logging.info(f"Processing sample {i+1}/{len(repo_samples)} for repo {repo_dir.name}")
+                    # 使用过滤了 next_line 及其后续内容的数据样本构建图
+                    graphs = process_repobench_repo(str(repo_dir), sample)
+                    
+                    # 为每个样本创建单独的输出目录
+                    sample_id = f"sample_{i+1}"
+                    output_dir = repo_dir / "processed" / sample_id
+                    output_dir.mkdir(parents=True, exist_ok=True)
+                    
+                    # 调用可视化函数
+                    visualize_and_save_graphs(graphs, output_dir)
+            else:
+                # 如果没有样本数据，则按原来的方式处理
+                graphs = process_repobench_repo(str(repo_dir))
+                
+                # 保存图结构
+                output_dir = repo_dir / "processed"
+                output_dir.mkdir(parents=True, exist_ok=True)
 
-            # 调用可视化函数
-            visualize_and_save_graphs(graphs, output_dir)
+                # 调用可视化函数
+                visualize_and_save_graphs(graphs, output_dir)
             
             logging.info(f"Successfully processed repo: {repo_dir}")
         except Exception as e:
