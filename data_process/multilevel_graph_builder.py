@@ -569,51 +569,80 @@ def main():
         logging.error(f"Failed to load RepoBench dataset: {str(e)}")
         dataset = None
        
-    # 处理每个仓库
-    for repo_dir in Path(repobench_path).iterdir():
+    # 1. 获取数据集中所有的repo_name
+    repo_names = set()
+    if dataset is not None:
+        for sample in dataset:
+            # 从样本的repo_name中提取实际仓库名称
+            repo_name = sample['repo_name'].split('/')[-1]
+            repo_names.add(repo_name)
+        logging.info(f"Found {len(repo_names)} unique repositories in the dataset")
+    
+    # 用于测试的仓库列表 (可选择性过滤)
+    test_repos = ["3D-DAM", "4dfy", "4k4d", "AA", "A3FL", "ace"]
+    if test_repos:
+        repo_names = {name for name in repo_names if name in test_repos}
+        logging.info(f"Filtered to {len(repo_names)} test repositories: {repo_names}")
+    
+    # 创建图结构存储的根目录
+    repo_graphs_dir = Path(repobench_path) / "repo_graphs"
+    repo_graphs_dir.mkdir(parents=True, exist_ok=True)
+    
+    # 2. 遍历这些repo对应的仓库
+    for repo_name in repo_names:
+        repo_dir = Path(repobench_path) / repo_name
         if not repo_dir.is_dir():
-            continue
-        
-        # 只使用其中几个repo进行测试
-        if repo_dir.name not in ["3D-DAM"]:
+            logging.warning(f"Repository directory not found: {repo_dir}")
             continue
         
         logging.info(f"Processing repository: {repo_dir}")
         try:
             # 找出该仓库相关的所有样本
-            repo_samples = None
-            if dataset:
-                repo_samples = [sample for sample in dataset if repo_dir.name in sample['repo_name']]
-                logging.info(f"Found {len(repo_samples)} samples for repo {repo_dir.name}")
+            repo_samples = [sample for sample in dataset if repo_name in sample['repo_name']]
+            logging.info(f"Found {len(repo_samples)} samples for repo {repo_name}")
             
-            # 为每个样本构建过滤后的图结构
-            if repo_samples:
-                for i, sample in enumerate(repo_samples):
-                    logging.info(f"Processing sample {i+1}/{len(repo_samples)} for repo {repo_dir.name}")
-                    # 使用过滤了 next_line 及其后续内容的数据样本构建图
-                    graphs = process_repobench_repo(str(repo_dir), sample)
-                    
-                    # 为每个样本创建单独的输出目录
-                    sample_id = f"sample_{i+1}"
-                    output_dir = repo_dir / "processed" / sample_id
-                    output_dir.mkdir(parents=True, exist_ok=True)
-                    
-                    # 调用可视化函数
-                    visualize_and_save_graphs(graphs, output_dir)
-            else:
-                # 如果没有样本数据，则按原来的方式处理
-                graphs = process_repobench_repo(str(repo_dir))
+            # 为仓库创建处理结果和图结构目录
+            processed_dir = repo_dir / "processed"
+            processed_dir.mkdir(parents=True, exist_ok=True)
+            
+            repo_graph_dir = repo_graphs_dir / repo_name
+            repo_graph_dir.mkdir(parents=True, exist_ok=True)
+            
+            # 3. 为每个样本进行过滤和图结构构建
+            for i, sample in enumerate(repo_samples):
+                sample_id = f"sample_{i+1}"
+                logging.info(f"Processing sample {i+1}/{len(repo_samples)} for repo {repo_name}")
                 
-                # 保存图结构
-                output_dir = repo_dir / "processed"
-                output_dir.mkdir(parents=True, exist_ok=True)
-
-                # 调用可视化函数
-                visualize_and_save_graphs(graphs, output_dir)
+                # 预处理样本，过滤next_line及其后续内容
+                processed_sample = preprocess_repobench_data(sample)
+                
+                # 为当前样本构建图结构
+                graphs = process_repobench_repo(str(repo_dir), processed_sample)
+                
+                # 4. 保存处理结果到processed目录
+                sample_dir = processed_dir / sample_id
+                sample_dir.mkdir(parents=True, exist_ok=True)
+                
+                # 保存过滤后的代码
+                with open(sample_dir / "filtered_code.py", "w") as f:
+                    f.write(processed_sample['all_code'])
+                
+                # 保存原始代码和预期的next_line（用于评估）
+                with open(sample_dir / "original_code.py", "w") as f:
+                    f.write(sample['all_code'])
+                with open(sample_dir / "next_line.txt", "w") as f:
+                    f.write(sample['next_line'])
+                
+                # 保存图结构到repo_graphs目录
+                graph_dir = repo_graph_dir / sample_id
+                graph_dir.mkdir(parents=True, exist_ok=True)
+                
+                # 调用可视化函数并保存图结构
+                visualize_and_save_graphs(graphs, graph_dir)
             
-            logging.info(f"Successfully processed repo: {repo_dir}")
+            logging.info(f"Successfully processed repo: {repo_name}")
         except Exception as e:
-            logging.error(f"Failed to process repo: {repo_dir}: {str(e)}")
+            logging.error(f"Failed to process repo: {repo_name}: {str(e)}")
 
 
 

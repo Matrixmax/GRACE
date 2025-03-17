@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# A convenient method to return the actual path even for non symlinks
+# and multi-level symlinks.
+function get_realpath() {
+    local previous="$1"
+    local next=$(readlink "${previous}")
+    while [ -n "${next}" ]; do
+        previous="${next}"
+        next=$(readlink "${previous}")
+    done
+    echo "${previous}"
+}
+
+exec "$(dirname $(get_realpath "$0"))"/cli/sparrow-cli --sparrow-cli-internal "$(dirname $(get_realpath "$0"))" "$@"

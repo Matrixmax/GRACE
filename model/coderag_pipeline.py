@@ -9,7 +9,18 @@ from dataclasses import dataclass
 from pathlib import Path
 import argparse
 
-from GRACE.data_process.multilevel_graph_builder import MultiLevelGraph, MultiLevelGraphBuilder
+# 数据集处理相关
+try:
+    from datasets import load_dataset
+except ImportError:
+    pass
+
+from GRACE.data_process.multilevel_graph_builder import (
+    MultiLevelGraph, 
+    MultiLevelGraphBuilder, 
+    process_repobench_repo, 
+    preprocess_repobench_data
+)
 
 from codebleu import calc_codebleu
 
@@ -319,10 +330,15 @@ def main():
     
     # 遍历数据集中的每个样本
     for idx, sample in enumerate(dataset):
-        repo_name = sample['repo_name']
-        file_path = sample['file_path']
-        code_context = sample['all_code']  # 使用all_code作为上下文
-        next_line = sample['next_line']  # 这是我们要预测的行
+        try:
+            repo_name = sample['repo_name']
+            file_path = sample['file_path']
+            code_context = sample['all_code']  # 使用all_code作为上下文
+            next_line = sample['next_line']  # 这是我们要预测的行
+            
+            if not code_context or not next_line:
+                print(f'Sample {idx+1} has empty code_context or next_line, skipping.')
+                continue
         
         print(f'\nProcessing sample {idx+1}/{len(dataset)}: {repo_name} - {file_path}')
         
@@ -332,13 +348,17 @@ def main():
             print(f'Repository {repo_name} not found at {repo_dir}')
             continue
         
+        # 预处理样本，过滤next_line及其后续内容
+        processed_sample = preprocess_repobench_data(sample)
+        filtered_code = processed_sample['all_code']
+        
         # 为当前样本构建图结构
-        graphs = process_repobench_repo(str(repo_dir), sample)
+        graphs = process_repobench_repo(str(repo_dir), processed_sample)
         query_graph = graphs.combined_graph
         
         # 检索相关代码片段
         snippets, scores = pipeline.retrieve(
-            query_code=code_context,
+            query_code=filtered_code,  # 使用过滤后的代码
             query_graph=query_graph,
             k=args.k,
             alpha=args.alpha
@@ -393,20 +413,36 @@ def main():
     accuracy = correct_samples / total_samples if total_samples > 0 else 0
     avg_bleu = sum(bleu_scores) / len(bleu_scores) if bleu_scores else 0
     
+    # 计算其他统计数据
+    processed_samples = len(results)
+    skipped_samples = len(dataset) - processed_samples
+    success_rate = processed_samples / len(dataset) if len(dataset) > 0 else 0
+    
     print(f'\nEvaluation complete:')
     print(f'Total samples: {total_samples}')
     print(f'Accuracy: {accuracy:.4f}')
     print(f'Average CodeBLEU: {avg_bleu:.4f}')
     
     # 保存最终结果
-    with open('final_results.json', 'w') as f:
-        json.dump({
-            'total_samples': total_samples,
-            'correct_samples': correct_samples,
-            'accuracy': accuracy,
-            'avg_bleu': avg_bleu,
-            'results': results
-        }, f, indent=2)
+    results_file = f'final_results_{Path(args.eval_dataset).stem}.json'
+    print(f'Saving results to {results_file}')
+    try:
+        with open(results_file, 'w') as f:
+            json.dump({
+                'dataset': args.eval_dataset,
+                'total_dataset_samples': len(dataset),
+                'processed_samples': processed_samples,
+                'skipped_samples': skipped_samples,
+                'success_rate': success_rate,
+                'total_completed_samples': total_samples,
+                'correct_samples': correct_samples,
+                'accuracy': accuracy,
+                'avg_bleu': avg_bleu,
+                'results': results
+            }, f, indent=2)
+        print(f'Results saved successfully')
+    except Exception as e:
+        print(f'Error saving results: {e}')
         
 
 

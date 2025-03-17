@@ -1,0 +1,83 @@
+name: citest
+
+on:
+  push:
+    branches:
+      - master
+      - "release/**"
+    paths-ignore:
+      - "setup.*"
+      - "requirements.txt"
+      - "apps/**"
+      - "docs/**"
+      - "demo/**"
+      - "config/**"
+      - "resource/**"
+      - "README.md"
+      - "README_CN.md"
+      - "NOTICE"
+      - ".github/workflows/lint.yaml"
+
+  pull_request:
+    paths-ignore:
+      - "setup.*"
+      - "requirements.txt"
+      - "apps/**"
+      - "docs/**"
+      - "demo/**"
+      - "config/**"
+      - "resource/**"
+      - "README.md"
+      - "README_zh-CN.md"
+      - "NOTICE"
+      - ".github/workflows/lint.yaml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unittest:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: testci
+    steps:
+    - uses: actions/checkout@v3
+
+#    - name: Cache Python dependencies
+#      uses: actions/cache@v3
+#      id: cache
+#      with:
+#        path: ~/.cache/pip
+#        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+
+    - name: Set up Python 3.10.14
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.10.14"
+
+    # Add a step to check if it's a fork and set an environment variable
+    - name: Check if PR is from a fork
+      run: echo "IS_FORKED_PR=${{ github.event.pull_request.head.repo.fork }}" >> $GITHUB_ENV
+
+    - name: Update pip
+      run: pip install --upgrade pip
+
+    - name: Install dependencies
+      if: steps.cache.outputs.cache-hit != 'true'
+      run: pip install -r requirements.txt
+
+    - name: Run tests
+      env:
+        AMAP_TOKEN: ${{ secrets.AMAP_TOKEN }}
+        BING_SEARCH_V7_SUBSCRIPTION_KEY: ${{ secrets.BING_SEARCH_V7_SUBSCRIPTION_KEY }}
+        DASHSCOPE_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
+        MODELSCOPE_API_TOKEN: ${{ secrets.MODELSCOPE_API_TOKEN }}
+        OSS_ACCESS_KEY_ID: ${{ secrets.OSS_ACCESS_KEY_ID }}
+        OSS_ACCESS_KEY_SECRET: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
+        OSS_BUCKET_NAME: ${{ secrets.OSS_BUCKET_NAME }}
+        OSS_ENDPOINT: ${{ secrets.OSS_ENDPOINT }}
+
+      shell: bash
+      run: bash .dev_scripts/dockerci.sh

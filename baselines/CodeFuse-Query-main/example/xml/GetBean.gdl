@@ -1,0 +1,43 @@
+// script
+use coref::xml::*
+
+fn default_db() -> XmlDB {
+    return XmlDB::load("coref_xml_src.db")
+}
+
+// get class name
+fn getClassName(bean: BeanXmlElement) -> string {
+    for (attr in bean.getAttribute()) {
+        if (attr.getName() = "class") {
+            return attr.getValue()
+        }
+    }
+}
+
+// get key
+fn getKey(e: EntryXmlElement) -> string {
+    for (attr in e.getAttribute()) {
+        if (attr.getName() = "key") {
+            return attr.getValue()
+        }
+    }
+}
+
+// output value and class info of the bean
+fn output1(className: string, pName: string, kName: string) -> bool {
+    let (db = default_db()) {
+        for (bean in BeanXmlElement(db), p in PropertyXmlElement(db), e in EntryXmlElement(db)) {
+            if (className = getClassName(bean) &&
+                bean.key_eq(p.getParent()) &&
+                p.key_eq(e.getParent().getParent()) &&
+                pName = p.getName() &&
+                kName = getKey(e)) {
+                return true
+            }
+        }
+    }
+}
+
+fn main() {
+    output(output1())
+}

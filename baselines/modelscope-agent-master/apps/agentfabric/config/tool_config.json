@@ -1,0 +1,106 @@
+{
+  "image_gen": {
+    "name": "Wanx Image Generation",
+    "is_active": true,
+    "use": false,
+    "is_remote_tool": true
+  },
+  "code_interpreter": {
+    "name": "Code Interpreter",
+    "is_active": true,
+    "use": false,
+    "is_remote_tool": false,
+    "max_output": 2000
+  },
+  "web_browser": {
+    "name": "Web Browsing",
+    "is_active": true,
+    "use": false,
+    "max_browser_length": 2000
+  },
+  "amap_weather": {
+    "name": "高德天气",
+    "is_active": true,
+    "use": false
+  },
+  "paraformer_asr": {
+    "name": "Paraformer语音识别",
+    "is_active": true,
+    "use": false,
+    "is_remote_tool": true
+  },
+  "sambert_tts": {
+    "name": "Sambert语音合成",
+    "is_active": true,
+    "use": false,
+    "is_remote_tool": true
+  },
+  "wordart_texture_generation": {
+    "name": "艺术字纹理生成",
+    "is_active": true,
+    "use": false
+  },
+  "web_search": {
+    "name": "Web Searching",
+    "is_active": true,
+    "use": false,
+    "searcher": "bing"
+  },
+  "qwen_vl": {
+    "name": "Qwen-VL识图",
+    "is_active": true,
+    "use": false
+  },
+  "style_repaint": {
+    "name": "人物风格重绘",
+    "is_active": true,
+    "use": false
+  },
+  "image_enhancement": {
+    "name": "追影-放大镜",
+    "is_active": true,
+    "use": false
+  },
+  "text-address": {
+    "name": "地址解析",
+    "url": "https://api-inference.modelscope.cn/api-inference/v1/models/damo/mgeo_geographic_elements_tagging_chinese_base",
+    "use": false,
+    "is_active": true,
+    "is_remote_tool": true
+  },
+  "text-ner": {
+    "name": "命名实体识别",
+    "url": "https://api-inference.modelscope.cn/api-inference/v1/models/damo/nlp_raner_named-entity-recognition_chinese-base-cmeee",
+    "use": false,
+    "is_active": false,
+    "is_remote_tool": true
+  },
+  "speech-generation": {
+      "name": "语音生成",
+      "url": "https://api-inference.modelscope.cn/api-inference/v1/models/damo/speech_sambert-hifigan_tts_zh-cn_16k",
+      "use": false,
+      "is_active": true,
+      "is_remote_tool": true
+  },
+  "video-generation": {
+      "name": "视频生成",
+      "url": "https://api-inference.modelscope.cn/api-inference/v1/models/damo/text-to-video-synthesis",
+      "use": false,
+      "is_active": true,
+      "is_remote_tool": true
+  },
+  "text-translation-en2zh": {
+      "name": "英译中",
+      "url": "https://api-inference.modelscope.cn/api-inference/v1/models/damo/nlp_csanmt_translation_en2zh",
+      "use": false,
+      "is_active": false,
+      "is_remote_tool": true
+  },
+  "text-translation-zh2en": {
+      "name": "中译英",
+      "url": "https://api-inference.modelscope.cn/api-inference/v1/models/damo/nlp_csanmt_translation_zh2en",
+      "use": false,
+      "is_active": false,
+      "is_remote_tool": true
+  }
+}
