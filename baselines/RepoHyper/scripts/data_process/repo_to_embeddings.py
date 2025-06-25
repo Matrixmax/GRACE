@@ -1,5 +1,5 @@
-from baselines.RepoHyper.src.repo_graph.repo_to_graph import load_contexts_then_embed, edge_dict_to_adjacency_tensor
-from baselines.RepoHyper.src.repo_graph.parse_source_code import parse_source
+from GRACE.baselines.RepoHyper.src.repo_graph.repo_to_graph import load_contexts_then_embed, edge_dict_to_adjacency_tensor
+from GRACE.baselines.RepoHyper.src.repo_graph.parse_source_code import parse_source
 import os
 import pickle
 from tqdm import tqdm
@@ -9,7 +9,7 @@ import sys
 import torch
 
 # REPOS_FOLDER = "data/repobench/repos/"
-REPOS_ROOT = "/data/wxl/graphrag4se/GRACE/dataset/hf_datasets/repobench_python_v1.1/cross_file_first"
+REPOS_ROOT = "GRACE/dataset/hf_datasets/repobench_python_v1.1/cross_file_first"
 REPOS_FOLDER = REPOS_ROOT + "/repos"
 REPOS_TRANSLATED_FOLDER = REPOS_ROOT + "/python_repos_translated"
 REPOS_CALL_GRAPHS_FOLDER = REPOS_ROOT + "/repos_call_graphs"

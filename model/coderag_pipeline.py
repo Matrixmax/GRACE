@@ -33,12 +33,7 @@ from codebleu import calc_codebleu
 
 
 def calc_metrics(hypotheses, references):
-    # TODO 计算指标：EM、ES、recall、F1
-    # 1. EM 
-    # 2. ES
-    # 3. recall
-    # 4. F1
-    # 5. CodeBLEU
+    # 计算指标：EM、ES、recall、F1
     result = {}
     result['codebleu'] = calc_codebleu(hypotheses, references, lang="python")
     # Calculate Exact Match (EM)

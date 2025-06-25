@@ -4,7 +4,7 @@ import torch
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
-from baselines.RepoHyper.src.models.unixcoder import UniXcoder
+from GRACE.baselines.RepoHyper.src.models.unixcoder import UniXcoder
 
 checkpoint = "Salesforce/codet5p-220m"
 device = "cuda:3" # for GPU usage or "cpu" for CPU usage

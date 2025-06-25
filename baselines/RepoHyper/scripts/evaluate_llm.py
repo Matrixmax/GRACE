@@ -1,12 +1,13 @@
 # Python
 import torch
+import pickle
 from torch.utils.data import DataLoader
 import argparse
 import os
-from baselines.RepoHyper.src.utils import load_data
-from baselines.RepoHyper.src.metrics import calc_metrics
+from GRACE.baselines.RepoHyper.src.utils import load_data
+from GRACE.baselines.RepoHyper.src.metrics import calc_metrics
 from datasets import load_dataset
-from baselines.RepoHyper.src.repo_graph.parse_source_code import parse_file, parse_source
+from GRACE.baselines.RepoHyper.src.repo_graph.parse_source_code import parse_file, parse_source
 
 # from langchain_community.chat_models import ChatOpenAI
 # from langchain_community.embeddings import OpenAIEmbeddings
@@ -87,11 +88,11 @@ def evaluate_model(model_name, retrieved_contexts):
     filtered_data = cross_file_first_hard.filter(lambda x: x['repo_name'] == 'giaminhgist/3D-DAM')
     # Iterate over the data
     for batch in filtered_data:
-        context = finding_context(retrieved_contexts, batch['file_path'])
+        # context = finding_context(retrieved_contexts, batch['file_path'])
         inputs, targets = batch["all_code"], batch["next_line"]
 
         # Forward pass
-        outputs = model.complete(inputs, context)
+        outputs = model.complete(inputs, str(retrieved_contexts))
         print(f'model predict next line code: {outputs}')
 
         break
@@ -104,11 +105,6 @@ def evaluate_model(model_name, retrieved_contexts):
     # print(f'Average Metric: {avg_accuracy}')
 
 
-def finding_context(contexts_files, relative_path):
-    for file in contexts_files:
-        if relative_path == file["relative_path"]:
-            return file
-    return None
 
 def main():
     parser = argparse.ArgumentParser(description='Evaluate LLM model')
@@ -129,7 +125,12 @@ def main():
     # retrieved_contexts = load_dataset(f"/data/wxl/graphrag4se/GRACE/dataset/hf_datasets/repobench_{language}_v1.1")
     # TEMP
 
-    contexts_files = parse_source("/data/wxl/graphrag4se/GRACE/dataset/hf_datasets/repobench_python_v1.1/cross_file_first/repos/3D-DAM", "/data/wxl/graphrag4se/GRACE/dataset/hf_datasets/repobench_python_v1.1/cross_file_first/repos_call_graphs/3D-DAM.json")
+    pkl_path = "/data/wxl/graphrag4se/GRACE/dataset/hf_datasets/repobench_python_v1.1/cross_file_first/repos_graphs_labeled_link_with_called_imported_edges/3D-DAM_labeled.pkl"
+    with open(pkl_path, "rb") as f:
+        data = pickle.load(f)
+    gnn_context = data[0]['kcge_context']
+
+    # contexts_files = parse_source("/data/wxl/graphrag4se/GRACE/dataset/hf_datasets/repobench_python_v1.1/cross_file_first/repos/3D-DAM", "/data/wxl/graphrag4se/GRACE/dataset/hf_datasets/repobench_python_v1.1/cross_file_first/repos_call_graphs/3D-DAM.json")
 
     # file = finding_context(contexts_files, "3d-dam/variational/study_test.py")
     # print(file)
@@ -137,8 +138,8 @@ def main():
     # TEMP
 
     # evaluate_model(model_name, retrieved_contexts)
-    evaluate_model(model_name, contexts_files)
-    
+    evaluate_model(model_name, gnn_context)
+
 
 if __name__ == "__main__":
     main()

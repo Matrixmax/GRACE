@@ -1,2 +1,23 @@
 # 忽略整个 dataset 目录
 dataset/
+baselines/zip/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+pip-selfcheck.json
+.python-version
+
+# Large files - 忽略所有 .zip 文件
+*.zip
+
+# IDE / Editor specific
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace

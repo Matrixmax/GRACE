@@ -75,8 +75,9 @@ def main():
     repo_names = list(set(repo_names) - set(non_empty_created_names))
     
     # TEMP 这里只使用一个来测试一下
-    repo_names = ['3D-DAM']
+    repo_names = ['4dfy']
 
+    generate_call_graphs('4dfy')
     Parallel(n_jobs=30, prefer="threads")(
         delayed(generate_call_graphs)(name) for name in tqdm(repo_names))
     # for name in repo_names[:1]:
