@@ -1,6 +1,7 @@
 # 忽略整个 dataset 目录
 dataset/
 baselines/zip/
+temp/
 
 # Python
 __pycache__/
@@ -9,6 +10,7 @@ __pycache__/
 *.pyd
 .Python
 env/
+.env
 venv/
 pip-selfcheck.json
 .python-version

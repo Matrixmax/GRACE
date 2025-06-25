@@ -955,33 +955,26 @@ def main():
 
     #原始
     # RepoBench数据集路径
-    repobench_path = Path(f"/data/wby/allcode/repohyper/GRACE/dataset/hf_datasets/repobench_{language}_v1.1/cross_file_first/repos")
-    repobench_root = Path(f"/data/wby/allcode/repohyper/GRACE/dataset/hf_datasets/repobench_{language}_v1.1/in_file")
+    # repobench_path = Path(f"/data/wby/allcode/repohyper/GRACE/dataset/hf_datasets/repobench_{language}_v1.1/cross_file_first/repos")
+    # repobench_root = Path(f"/data/wby/allcode/repohyper/GRACE/dataset/hf_datasets/repobench_{language}_v1.1/cross_file_first")
 
     # repoeval-updated
-    # repobench_path = Path(f"/data/wby/allcode/repohyper/GRACE/dataset/dataset_repoeval_updated/repos")
-    # repobench_root = Path(f"/data/wby/allcode/repohyper/GRACE/dataset/dataset_repoeval_updated/repoeval_to_repobench")
-
-    #crosscodeeval
-    # repobench_path = Path(f"/data/wby/allcode/repohyper/GRACE/dataset/dataset_crosscodeeval/repos")
-    # repobench_root = Path(f"/data/wby/allcode/repohyper/GRACE/dataset/dataset_crosscodeeval/data/python")
+    repobench_path = Path(f"/data/wby/allcode/repohyper/GRACE/dataset/dataset_repoeval_updated/repos")
+    repobench_root = Path(f"/data/wby/allcode/repohyper/GRACE/dataset/dataset_repoeval_updated/repoeval_to_repobench")
 
     #原始
 
     # 加载 RepoBench 数据集
-    try:
-        from datasets import load_dataset
-        dataset = load_dataset(f"/data/wby/allcode/repohyper/GRACE/dataset/hf_datasets/repobench_{language}_v1.1", split=['in_file'])[0]
-        logging.info(f"Successfully loaded RepoBench dataset with {len(dataset)} samples")
-    except Exception as e:
-        logging.error(f"Failed to load RepoBench dataset: {str(e)}")
-        dataset = None
+    # try:
+    #     from datasets import load_dataset
+    #     dataset = load_dataset(f"/data/wby/allcode/repohyper/GRACE/dataset/hf_datasets/repobench_{language}_v1.1", split=['cross_file_first'])[0]
+    #     logging.info(f"Successfully loaded RepoBench dataset with {len(dataset)} samples")
+    # except Exception as e:
+    #     logging.error(f"Failed to load RepoBench dataset: {str(e)}")
+    #     dataset = None
 
     #加载repoeval-updated数据集
-    #dataset=load_jsonl(f"{repobench_root}/line_level.python.test.jsonl")
-
-    # 加载crosscodeeval数据集
-    #dataset = load_jsonl(f"{repobench_root}/line_completion.jsonl")
+    dataset=load_jsonl(f"{repobench_root}/line_level.python.test.jsonl")
 
     # 用于测试的仓库列表 (可选择性过滤)
     test_repos = ["3D-DAM", "4dfy", "4k4d", "AA", "A3FL", "ace"]
@@ -1011,9 +1004,8 @@ def main():
         # 从样本中提取仓库名称
         repo_full_name = sample['repo_name']
         #原始
-        repo_author, repo_name = repo_full_name.split('/')
-        #repo_name=repo_full_name
-
+        #repo_author, repo_name = repo_full_name.split('/')
+        repo_name=repo_full_name
         repo_path = repobench_path / repo_name
         temp_repo_path = repobench_root / 'temp' / repo_name
         
